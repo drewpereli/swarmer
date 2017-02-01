@@ -14,7 +14,7 @@ View.prototype.set = function()
 	for (var i in game.actors)
 	{
 		var a = game.actors[i];
-		this.ctx.fillStyle = "black";
+		this.ctx.fillStyle = a.team === 0 ? "red" : "blue";
 		this.ctx.fillRect(a.tile.x * tileLength, a.tile.y * tileLength, tileLength, tileLength);
 	}
 }

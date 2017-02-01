@@ -4,6 +4,7 @@ function Actor(tile)
 	this.tile = tile;
 	this.viewDistance = actorViewDistance;
 	this.timeUntilNextAction = Math.floor( Math.random() * actorMoveTime + 1);
+	this.team = Math.round(Math.random());
 }
 
 
@@ -102,7 +103,9 @@ Actor.prototype.act0 = function()
 	
 	if (visibleActor)
 	{
-		var dir = this.getBestDirectionTowards(visibleActor);
+		var dir = visibleActor.team === this.team ? 
+			this.getBestDirectionTowards(visibleActor) :
+			this.getBestDirectionAwayFrom(visibleActor);
 		if (this.canMoveTowards(dir))
 		{
 			this.move(dir);
@@ -142,6 +145,12 @@ Actor.prototype.moveRandomly = function()
 			return;
 		}
 	}
+}
+
+Actor.prototype.getBestDirectionAwayFrom = function(a)
+{
+	var antiDir = this.getBestDirectionTowards(a);
+	return antiDir >= 2 ? antiDir - 2 : antiDir + 2;
 }
 
 

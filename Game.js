@@ -9,7 +9,7 @@ Game.prototype.tick = function()
 {
 	for (var i in this.actors)
 	{
-		this.actors[i].act();
+		this.actors[i].act0();
 	}
 	this.view.set();
 }
@@ -34,6 +34,7 @@ Game.prototype.start = function()
 		}
 	}
 	this.view = new View();
+	this.view.set();
 	setInterval(function(){game.tick();}, interval);
 }
 

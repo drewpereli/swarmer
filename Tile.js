@@ -20,3 +20,8 @@ Tile.prototype.blocksMovement = function()
 {
 	return !!this.actor;
 }
+
+Tile.prototype.getDistance = function(t)
+{
+	return getDistance(this.x, this.y, t.x, t.y);
+}

@@ -6,7 +6,8 @@ function Actor(tile)
 	this.timeUntilNextAction = Math.floor( Math.random() * actorMoveTime + 1);
 }
 
-Actor.prototype.act = function()
+
+Actor.prototype.act0 = function()
 {
 	this.timeUntilNextAction--;
 	if (this.timeUntilNextAction > 0)
@@ -26,17 +27,24 @@ Actor.prototype.act = function()
 		}
 	}
 	*/
+
 	//Scan pixels within view distance
-	
-	var range = 2 * this.viewDistance + 1;
-	var xOffsetStart = Math.floor( Math.random() * (range + 1) );
-	for (var xOffset =  xOffsetStart ; xOffset < xOffsetStart + range ; xOffset++)
+	//var xDirection = Math.round(Math.random() * 2) - 1; //-1 or 1;
+	//var yDirection = Math.round(Math.random() * 2) - 1; //-1 or 1;
+	/*
+	var range = 2 * this.viewDistance;
+	var xIteratorStart = Math.floor( Math.random() * range );
+	for (var xIterator = xIteratorStart ; xIterator < xIteratorStart + range ; xIterator++)
 	{
-		var x = (xOffset % range) + this.tile.x - this.viewDistance;
-		var yOffsetStart = Math.floor( Math.random() * (range + 1) );
-		for (var yOffset =  yOffsetStart ; yOffset < yOffsetStart + range ; yOffset++)
+		var xOffset = xIterator < range ? xIterator : xIterator - range;
+		//var x = this.tile.x - (this.viewDistance * xDirection) + (xOffset * xDirection);
+		var x = this.tile.x - (this.viewDistance) + (xOffset);
+		var yIteratorStart = Math.floor( Math.random() * (range + 1) );
+		for (var yIterator = yIteratorStart ; yIterator < yIteratorStart + range ; yIterator++)
 		{
-			var y = (yOffset % range) + this.tile.y - this.viewDistance;
+			var yOffset = yIterator < range ? yIterator : yIterator - range;
+			//var y = this.tile.y - (this.viewDistance * yDirection) + (yOffset * yDirection);
+			var y = this.tile.y - (this.viewDistance) + (yOffset);
 			if (getDistance(x, y, this.tile.x, this.tile.y) > this.viewDistance)
 			{
 				continue;
@@ -46,12 +54,51 @@ Actor.prototype.act = function()
 			{
 				visibleActor = t.actor;
 			}
+			if (visibleActor)
+			{
+				break;
+			}
 		}
 		if (visibleActor)
 		{
 			break;
 		}
 	}
+	*/
+	//Randomly scan x tiles within range until you find an actor
+	var attempts = 0;
+	while (attempts < actorSearchAttempts)
+	{
+		var xOffset = Math.floor(Math.random() * this.viewDistance) * 2 - this.viewDistance;
+		var yOffset = Math.floor(Math.random() * this.viewDistance) * 2 - this.viewDistance;
+		var x = this.tile.x + xOffset;
+		var y = this.tile.y + yOffset;
+		if (t = game.map.getTile(x, y))
+		{
+			if (t.actor && t.actor !== this)
+			{
+				visibleActor = t.actor;
+				break;
+			}
+		}
+		attempts++;
+	}
+
+	
+	/*
+	//Scan all actors till we find one close enough
+	var actors = shuffle(game.actors);
+	for (var aIndex in actors)
+	{
+		var a = actors[aIndex];
+		var d = this.tile.getDistance(a.tile);
+		if (d < this.viewDistance)
+		{
+			visibleActor = a;
+			break;
+		}
+	}
+	*/
 	
 	if (visibleActor)
 	{
@@ -67,8 +114,24 @@ Actor.prototype.act = function()
 	}
 }
 
+Actor.prototype.act1 = function()
+{
+	//Move randomly until you're alone
+	for (var i in this.tile.sibs)
+	{
+		if (t = this.tile.sibs[i])
+		{
+			if (t.actor)
+			{
+				this.moveRandomly();
+			}
+		}
+	}
+}
+
 Actor.prototype.moveRandomly = function()
 {
+	//console.log("m");
 	var start = Math.floor( Math.random() * 4 );
 	for (var i = start ; i < start + 4 ; i++)
 	{
@@ -81,9 +144,79 @@ Actor.prototype.moveRandomly = function()
 	}
 }
 
+
 Actor.prototype.getBestDirectionTowards = function(a)
 {
-	var angle = Math.atan2(a.tile.x - this.tile.x, a.tile.y - this.tile.y) / Math.PI;
+	//console.log("h");
+	var distances = [false, false, false, false];
+	for (var i in this.tile.sibs)
+	{
+		if (s = this.tile.sibs[i])
+		{
+			distances[i] = s.getDistance(a.tile);
+		}
+	}
+	//Get the shortest distance
+	var shortest = 9999999999999999999;
+	for (var i in distances)
+	{
+		if (d = distances[i])
+		{
+			if (d < shortest)
+			{
+				shortest = d;
+			}
+		}
+	}
+	var candidateIndeces = [];
+	for (var i in distances)
+	{
+		if (distances[i] == shortest)
+		{
+			candidateIndeces.push(i);
+		}
+	}
+	candidateIndeces = shuffle(candidateIndeces);
+	return candidateIndeces[0];
+}
+
+
+Actor.prototype.getBestDirectionTowardsOLD1 = function(a)
+{
+	var xDiff = a.tile.x - this.tile.x;
+	var yDiff = a.tile.y - this.tile.y;
+	var angle = Math.atan2(yDiff, xDiff) + Math.PI;
+	angle *= (180 / Math.PI); //Convert to degrees
+	if (this === game.actors[0])
+	{
+		//console.log(angle);
+	}
+	if (angle > 225 && angle < 315)
+	{
+		return 0;
+	}
+	else if (angle > 315 || angle < 45)
+	{
+		return 1;
+	}
+	else if (angle > 45 && angle < 135)
+	{
+		return 2;
+	}
+	else if (angle > 135 && angle < 225)
+	{
+		return 3;
+	}
+	else
+	{
+		return Math.floor(Math.random()*4);
+	}
+
+}
+
+Actor.prototype.getBestDirectionTowardsOLD = function(a)
+{
+	var angle = Math.atan2(a.tile.y - this.tile.y, a.tile.x - this.tile.x) / Math.PI;
 	if (angle > -.25 && angle < .25)
 	{
 		return 2;
@@ -102,6 +235,8 @@ Actor.prototype.getBestDirectionTowards = function(a)
 	}
 	else //angle is .25, .75, -.25, -.75
 	{
+		return Math.floor(Math.random()*4);
+		/*
 		var options = [];
 		switch (angle)
 		{
@@ -119,6 +254,7 @@ Actor.prototype.getBestDirectionTowards = function(a)
 				break;
 		}
 		return options[Math.floor(Math.random()*options.length)];
+		*/
 	}
 }
 

@@ -84,21 +84,41 @@ Actor.prototype.moveRandomly = function()
 Actor.prototype.getBestDirectionTowards = function(a)
 {
 	var angle = Math.atan2(a.tile.x - this.tile.x, a.tile.y - this.tile.y) / Math.PI;
-	if (angle >= 0 && angle < .25)
+	if (angle > -.25 && angle < .25)
 	{
 		return 2;
 	}
-	else if (angle >= .25 && angle < .75)
+	else if (angle > .25 && angle < .75)
 	{
 		return 1;
 	}
-	else if (angle >= .75 || angle < -.75)
+	else if (angle > .75 || angle < -.75)
 	{
 		return 0;
 	}
-	else
+	else if (angle > -.75 && angle < -.25)
 	{
 		return 3;
+	}
+	else //angle is .25, .75, -.25, -.75
+	{
+		var options = [];
+		switch (angle)
+		{
+			case .25:
+				options = [1, 2];
+				break;
+			case .75:
+				options = [1, 0];
+				break;
+			case -.75:
+				options = [0, 3];
+				break;
+			case -.25:
+				options = [3, 2];
+				break;
+		}
+		return options[Math.floor(Math.random()*options.length)];
 	}
 }
 
